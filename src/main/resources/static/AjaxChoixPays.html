@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+
+    <title>Document</title>
+</head>
+<body>
+    <h1>Test</h1>
+    <select name="country" id="country">
+        
+    </select>
+    <table>
+        <thead>
+            <th>Name</th>
+            <th>Population</th>
+            <th>Delete</th>
+        </thead>
+        <tbody id="les_villes">
+
+        </tbody>
+    </table>
+    <script>
+        
+        //Pour afficher les pays dans le select
+        let afficherselect = function(dataJson){
+            let countries = dataJson._embedded.countries
+            let htmlSelect = ""
+            htmlSelect = '<option value="default" id="option_default">Choisir un pays</option>'
+            for (c of countries){
+                htmlSelect = htmlSelect + `<option value=${c._links.cities.href}>${c.name}</option>`
+            }
+            document.getElementById("country").innerHTML = htmlSelect
+        }
+
+        let requestCountry = function(){
+            fetch("api/countries")
+            .then((response)=> response.json())
+            .then((dataJson)=>afficherselect(dataJson))
+        }
+        requestCountry()
+
+        //pour afficher les informations sur une ville
+        let requestVilleOfCountry = function(event){
+            let url_villes = event.target.value
+            fetch(url_villes)
+            .then((response)=> response.json())
+            .then((dataJson)=>afficherVillesOfCountry(dataJson))
+        }
+        let select = document.getElementById("country")
+        select.addEventListener("change", requestVilleOfCountry)
+
+        let afficherVillesOfCountry = function(dataJson){
+            console.log(dataJson)
+            let lesVilles = dataJson._embedded.cities
+            let table = document.getElementById("les_villes")
+            //On vide le tableau avant de mettre des données dedans
+            table.innerHTML = ""
+            for (v of lesVilles){
+                let tr = document.createElement("tr")
+
+                //Affichage du nom
+                let td_name = document.createElement("td")
+                td_name.textContent = v.name
+                tr.appendChild(td_name)
+
+                //Affichage population
+                let td_population = document.createElement("td")
+                td_population.textContent = v.population
+                tr.appendChild(td_population)
+
+                //Ajout bouton delete
+                let td_delete = document.createElement("td")
+                let url_ville = v._links.city.href
+                    //création du bouton
+                let btn_delete = document.createElement("button")
+                btn_delete.textContent = "Delete"
+                btn_delete.id = url_ville
+                    //ajout du onClick
+                btn_delete.addEventListener('click', deleteVille)
+                td_delete.appendChild(btn_delete)                
+                tr.appendChild(td_delete)
+
+                table.appendChild(tr)
+            }
+        }
+
+        let deleteVille = function(e){
+            fetch(e.target.id, {method: 'DELETE'})
+            document.getElementById("les_villes").innerHTML = ""
+            document.getElementById("option_default").selected = true
+        }
+        
+       
+
+    </script>
+    
+</body>
+</html>
